@@ -12,16 +12,14 @@ const personalSchema = new mongoose.Schema({
     lastName:{
         type:String
     },
-    business:{
-        type:Array
-    },
     roles:{
         type:Array,
         default:["users"]
     },
     personId:{
         type:String
-    }
+    },
+
 })
 
 module.exports = mongoose.model('personal',personalSchema)
