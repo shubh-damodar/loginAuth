@@ -30,5 +30,5 @@ app.use('/apis/v1/user',require('./router/user'))
 const port = process.env.port || 3000
 
 app.listen(port,()=>{
-    console.log(port)
+    console.log(`port is connected on ${port}`)
 })
