@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 const personalSchema = new mongoose.Schema({
     email:{
-        type:String
+        type:String,
+        indexes:true
     },
     password:{
         type:String
@@ -14,11 +15,17 @@ const personalSchema = new mongoose.Schema({
     },
     roles:{
         type:Array,
-        default:["users"]
+        default:["user"]
     },
     personId:{
         type:String
     },
+    mobileNumber:{
+        type:String
+    },
+    countryCode:{
+        type:String
+    }
 
 })
 

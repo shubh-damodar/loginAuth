@@ -1,9 +1,9 @@
 const LinkAccount = require('./models/linkaccount')
 class Email{
-    async getEmail(personId){
+    async getEmail(userDetails){
     let personalArray=[];
     let businessArray=[];
-    let linkaccounts = await LinkAccount.find({personId:personId}).lean()
+    let linkaccounts = await LinkAccount.find({personId:userDetails.personId}).lean()
      for(let linkaccount of linkaccounts){
        for(let key in linkaccount){
          if(key ==="personal"){
@@ -13,22 +13,24 @@ class Email{
          }
        }
      }
-     personalArray = this.removeDuplicates(personalArray)
-     businessArray = this.removeDuplicates(businessArray)
+     personalArray = this.removeDuplicates(personalArray,userDetails.email)
+     businessArray = this.removeDuplicates(businessArray,userDetails.email)
      console.log(personalArray,businessArray)
      return{
        personalArray,
        businessArray
      }
     }
-    removeDuplicates(duplicates){
+    removeDuplicates(duplicates,email){
+      console.log(email,"email")
       let removedDuplicate=[];
       for(let item of duplicates){
         let index = removedDuplicate.findIndex(object=>object.email === item.email)
-        if(index <=-1){
+        if(index <=-1 ){
           removedDuplicate.push(item)
         }
       }
+      removedDuplicate = removedDuplicate.filter(obj =>obj.email !==email)
       return removedDuplicate
     }
 }

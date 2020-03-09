@@ -1,7 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors')
-const app = express()
+const app = express();
+const {redis} = require('./redis/redis')
  async function mongo(){
     try {
     
@@ -13,6 +14,15 @@ const app = express()
      }
 }
 mongo()
+async function redisConnect(){
+    try {
+        await redis.initializeRedis()
+    } catch (error) {
+        throw error
+    }
+}
+redisConnect()
+
 app.get('/', (req, res) => res.send('Hello World!'))
 app.use(express.json())
 app.use(cors())

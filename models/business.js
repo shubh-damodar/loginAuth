@@ -1,7 +1,8 @@
 const mongoose = require('mongoose')
 const businessSchema = new mongoose.Schema({
     email:{
-        type:String
+        type:String,
+        indexes:true
     },
     password:{
         type:String
@@ -21,6 +22,12 @@ const businessSchema = new mongoose.Schema({
     roles:{
         type:Array,
         defualt:["employee"]
+    },
+    mobileNumber:{
+        type:String
+    },
+    countryCode:{
+        type:String
     }
 
 })

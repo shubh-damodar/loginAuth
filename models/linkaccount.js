@@ -7,7 +7,8 @@ const linkAccountSchema = new mongoose.Schema({
         type:Array
     },
     personId:{
-        type:String
+        type:String,
+        indexes:true
     }
 })
 
