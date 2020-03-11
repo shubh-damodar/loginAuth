@@ -61,7 +61,7 @@ router.post("/register", async (req, res) => {
   }
 });
 router.post("/login", async (req, res) => {
-  const email = req.body.email;
+  const email = req.body.email.toLowerCase();
   const password = req.body.password;
   let token;
   let userDetails;
@@ -73,23 +73,36 @@ router.post("/login", async (req, res) => {
     userDetails = await Personal.findOne({email:email}).lean()
   }
   else{
-    userDetails = await Personal.findOne({ email: email }).lean();
-    if(userDetails){
-      otherDetails = await Business.findOne({email:email}).lean();
-      if(otherDetails){
-        return res.status(423).json({error:"You have both account with same email please select an option",code:423})
+    try {
+      userDetails = await Personal.findOne({ email: email }).lean();
+      if(userDetails){
+        otherDetails = await Business.findOne({email:email}).lean();
+        userDetails["isBusiness"] = false
+        if(otherDetails){
+          return res.status(423).json({error:"You have both account with same email please select an option",code:423})
+        }
       }
+      if (!userDetails) {
+        userDetails = await Business.findOne({ email: email }).lean();
+        userDetails["isBusiness"] = true
+
+      }
+      
+      if (!userDetails) {
+        return res.status(400).json({ error: "Incorrect email provided" ,code:400});
+      }
+    } catch (error) {
+      return res.status(503).json({error:"service unavailable"})
     }
-    if (!userDetails) {
-      userDetails = await Business.findOne({ email: email }).lean();
-    }
-    if (!userDetails) {
-      return res.status(400).json({ error: "Incorrect email provided" ,code:400});
-    }
+  
   }
-  const compare = await utils.bcryptcompare(userDetails.password, password);
-  if (!compare) {
-    return res.status(400).json({ error: "Incorrect password provided",code:400 });
+  try {
+    const compare = await utils.bcryptcompare(userDetails.password, password);
+    if (!compare) {
+      return res.status(400).json({ error: "Incorrect password provided",code:400 });
+    }
+  } catch (error) {
+    return res.status(503).json({error:"service unavailable"})
   }
   try {
     token = await utils.getJwtToken(userDetails);
@@ -419,5 +432,37 @@ router.get('/get-linked-accounts',async(req,res)=>{
       return res.status(400).json(error);
     }
      return res.status(200).json({emails:emails})
+})
+router.post('/get-accounts',async(req,res)=>{
+  let email = req.body.email.toLowerCase()
+  try {
+    userDetails = await Personal.findOne({ email: email }).lean();
+    if(userDetails){
+      otherDetails = await Business.findOne({email:email}).lean();
+      if(otherDetails){
+        return res.status(423).json({error:"You have both account with same email please select an option",code:423})
+      }
+      userDetails["isBusiness"] = false
+    }
+  } catch (error) {
+      return res.status(503).json({error:"service unavailable"})
+  }
+  try {
+    if (!userDetails) {
+      userDetails = await Business.findOne({ email: email }).lean();
+      userDetails["isBusiness"] = true
+    }
+  } catch (error) {
+    return res.status(503).json({error:"service unavailable"})
+  }
+    if (!userDetails) {
+      return res.status(400).json({ error: "Incorrect email provided" ,code:400});
+    }
+    let objectToBesend ={
+      email:userDetails.email,
+      isBusiness:userDetails.isBusiness
+    }
+  return res.status(200).json({user:objectToBesend})
+
 })
 module.exports = router;

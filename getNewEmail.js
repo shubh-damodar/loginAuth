@@ -22,7 +22,6 @@ class Email{
      }
     }
     removeDuplicates(duplicates,email){
-      console.log(email,"email")
       let removedDuplicate=[];
       for(let item of duplicates){
         let index = removedDuplicate.findIndex(object=>object.email === item.email)
