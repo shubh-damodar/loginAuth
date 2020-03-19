@@ -16,6 +16,6 @@
     "ioredis": "^4.16.0",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.9.2",
-    "nexmo": "^2.6.0"
+    "twilio": "^3.41.1"
   }
 }

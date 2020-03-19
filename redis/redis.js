@@ -25,6 +25,7 @@ class Redis{
        }
    }
    async hmset(id,body,expiryMinutes){
+       console.log(expiryMinutes)
        try {
            if(expiryMinutes!==null){
                return await this.redis.hmset(id,body,expiryMinutes*60*1000)

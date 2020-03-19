@@ -74,12 +74,20 @@ const bcryptcompare = async(password,enteredpassword)=>{
           error:"Incorrect password" 
        }
       }
-
 }
 const getHash=async(password)=>{
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(password, salt);
     return hashed
+}
+const checkifAlreadyLinked =(type,userDetails,linkedEmail)=>{
+  let index = userDetails[type].findIndex(account=>account.email === linkedEmail[`${type}Email`])
+  if(index ===-1){
+    return true;
+  }else{
+    return false;
+  }    //  console.dir(check,{depth:7})
+
 }
 const linkAccounts =async(type,userDetails,email,password)=>{
     let accountToLink;
@@ -91,16 +99,26 @@ const linkAccounts =async(type,userDetails,email,password)=>{
     }else{
       loginAccountArray = userDetails["personal"][0]
     }
+    if(email === loginAccountArray[`${type}Email`]){
+      throw{
+        code:400,
+        error:"you can't link your own account"
+      }
+    }
     if(!loginAccountArray.emailVerified || !loginAccountArray.mobileVerified){
       throw{
         code:400,
         error:"Your account isn't verified"
       }
     }
+    console.log(type)
     try {
       accountToLink = await Account.findOne({[type]:{$elemMatch:{[`${type}Email`]:email}}}).lean()
     } catch (error) {
-       throw error
+      throw{
+        code:503,
+        error:"service unavailable"
+      }
     }
     if(!accountToLink){
       throw{
@@ -135,9 +153,7 @@ const linkAccounts =async(type,userDetails,email,password)=>{
        error:"Your account is not verified"
      }
     }
-    userDetails[type].push(detailsArray)
     try {
-      await Account.updateOne({_id:userDetails._id},{$push:{[type]:detailsArray}})
       await Account.deleteOne({_id:accountToLink._id})
     } catch (error) {
       throw{
@@ -145,10 +161,46 @@ const linkAccounts =async(type,userDetails,email,password)=>{
         error:"service unavailable"
       }
     }
+    if(accountToLink.personal.length){
+      for(let personal of accountToLink["personal"]){
+        let checkIfExists = checkifAlreadyLinked('personal',userDetails,personal)
+        if(checkIfExists){
+          try {
+            await Account.updateOne({_id:userDetails._id},{$push:{personal:personal}})
+          } catch (error) {
+            throw{
+              code:503,
+              error:"service unavailable"
+            }
+          }
+        }
+        
+      }
+    }
+  
+    if(accountToLink.business.length){
+      for(let business of accountToLink["business"]){
+       let checkIfExists =  checkifAlreadyLinked('personal',userDetails,business)
+       if(!checkIfExists){
+        try {
+          await Account.updateOne({_id:userDetails._id},{$push:{business:business}})
+        } catch (error) {
+          throw{
+            code:503,
+            error:"service unavailable"
+          }
+        }
+       }
+      }
+    }
+
     try {
-        objectToMerge =await mergeaccount(userDetails,accountToLink)
+        objectToMerge = await mergeaccount(userDetails,accountToLink)
     } catch (error) {
-        throw error
+      throw{
+        code:503,
+        error:"service unavailable"
+      }
     }
     return {accountToLink,objectToMerge}
   }
@@ -192,11 +244,7 @@ const linkAccounts =async(type,userDetails,email,password)=>{
           
       }
       return ObjectToUpdate
-    //   try {
-    //     //   await Account.updateOne({_id:loginAccount._id},{$set:ObjectToUpdate})
-    //   } catch (error) {
-    //       throw error
-    //   }
+   
   }
   const mergeAddress=(loginAddress,accountToLinkadress)=>{
       let address={}
@@ -280,7 +328,7 @@ const linkAccounts =async(type,userDetails,email,password)=>{
  const generateOtp = ()=>{
   var digits = '0123456789'; 
   let OTP = ''; 
-  for (let i = 0; i < 4; i++ ) { 
+  for (let i = 0; i < 6; i++ ) { 
       OTP += digits[Math.floor(Math.random() * 10)]; 
   } 
   return OTP; 
